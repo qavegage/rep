@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VirtuPas – Zelfstandige Virtuele Paskamer Mockup</title>
+<style>
+  :root{
+    --bg:#0b0f14;--card:#121722;--card2:#0f1420;--muted:#8ea0b5;--text:#eaf2ff;--accent:#4cc9f0;--accent2:#b5179e;--ok:#30e09b;--warn:#ffd166;--bad:#ff6b6b;--line:#1a2233;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:linear-gradient(180deg,#0b0f14,#0a1018 20%,#0b1220);color:var(--text);
+       font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  header{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);background:rgba(15,20,32,.8);backdrop-filter: blur(6px);position:sticky;top:0;z-index:10}
+  header .dot{width:10px;height:10px;border-radius:50%;background:conic-gradient(from 0deg,#4cc9f0,#b5179e)}
+  header h1{font-size:18px;margin:0}
+  header small{color:var(--muted)}
+  .wrapper{display:grid;grid-template-columns:340px minmax(420px,1fr) 420px;gap:16px;padding:16px;max-width:1400px;margin:0 auto}
+  @media (max-width:1200px){.wrapper{grid-template-columns:320px 1fr}}
+  @media (max-width:900px){.wrapper{grid-template-columns:1fr;}}
+  .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.25)}
+  .card h2{margin:0;padding:14px 16px;border-bottom:1px solid var(--line);font-size:15px;color:#cfe0ff}
+  .card .content{padding:14px 16px}
+  label{display:block;color:#c5d6ef;margin:10px 0 4px}
+  input[type="number"],input[type="text"],select{width:100%;padding:10px 12px;background:#0c121c;color:var(--text);border:1px solid #283247;border-radius:10px;outline:none}
+  input[type="file"]{width:100%;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:520px){.row{grid-template-columns:1fr}}
+  .btn{display:inline-flex;align-items:center;gap:.5rem;padding:10px 12px;border-radius:10px;border:1px solid #28405a;background:#0e1825;color:var(--text);cursor:pointer;user-select:none}
+  .btn.primary{background:linear-gradient(90deg,#1c2a40,#17263a);border-color:#2c3f5b}
+  .btn.accent{background:linear-gradient(90deg,#23344e,#1c2b44);border-color:#31527c}
+  .btn.ghost{background:#0b121c}
+  .btn:active{transform:translateY(1px)}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  @media (max-width:1400px){.grid{grid-template-columns:1fr}}
+  .catalog .item{padding:12px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#101626,#0f1522)}
+  .catalog h3{margin:0 0 6px;font-size:14px}
+  .tag{display:inline-block;padding:2px 8px;border-radius:999px;background:#192235;border:1px solid #24314a;color:#a7bedb;font-size:12px;margin-right:6px}
+  .price{color:#d5e6ff;font-weight:600}
+  .sizes{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .sizes button{min-width:34px;padding:6px 8px;border-radius:8px;border:1px solid #2a3955;background:#101827;color:#dbe8ff;cursor:pointer}
+  .sizes button.active{outline:2px solid var(--accent);border-color:#3b6d9b}
+  .color-swatch{width:20px;height:20px;border-radius:50%;border:1px solid #2b3347;display:inline-block;margin-right:6px;cursor:pointer}
+  .viewport{position:relative;min-height:560px;display:flex;align-items:flex-start;justify-content:center;background:radial-gradient(1200px 560px at 50% 100%,rgba(76,201,240,.08),transparent 60%),
+             radial-gradient(800px 360px at 10% 0%,rgba(181,23,158,.08),transparent 60%);padding:10px}
+  .stage{position:relative;width:420px;max-width:100%;height:560px;border-radius:18px;background:linear-gradient(180deg,#0d1522,#0a0f18);border:1px solid #1b2740;box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)}
+  .stage .toolbar{position:absolute;top:10px;right:10px;display:flex;gap:8px;flex-wrap:wrap}
+  .toolbar .btn{padding:6px 10px;font-size:12px}
+  .legend{position:absolute;bottom:10px;left:10px;background:rgba(10,14,22,.6);border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:#c6d7ef}
+  .statusbar{position:sticky;bottom:0;z-index:9;background:#0b1018;border-top:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap}
+  .fit{font-weight:600}
+  .fit.ok{color:var(--ok)}.fit.warn{color:var(--warn)}.fit.bad{color:var(--bad)}
+  details{margin-top:10px}
+  summary{cursor:pointer;color:#bcd2f5}
+  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;font-size:12px;color:#a1b3cc;white-space:pre-wrap}
+  footer{padding:14px 18px;color:#93a6c1}
+</style>
+</head>
+<body>
+  <header>
+    <div class="dot"></div>
+    <h1>VirtuPas · Virtuele Paskamer (mockup)</h1>
+    <small>Geen externe libraries · Single-file</small>
+  </header>
+
+  <main class="wrapper">
+    <!-- LEFT: AVATAR CREATOR -->
+    <section class="card">
+      <h2>Avatar-maker</h2>
+      <div class="content">
+        <label>Naam (optioneel)</label>
+        <input id="name" type="text" placeholder="Naam" />
+        <div class="row">
+          <div>
+            <label>Geslacht / frame</label>
+            <select id="gender">
+              <!-- stel mannelijk in als standaardkeuze -->
+              <option value="female">Vrouwelijk</option>
+              <option value="male" selected>Mannelijk</option>
+              <option value="neutral">Neutraal</option>
+            </select>
+          </div>
+          <div>
+            <label>Lichaamstype</label>
+            <select id="bodyType">
+              <option value="slim">Slank</option>
+              <option value="regular" selected>Gemiddeld</option>
+              <option value="curvy">Curvy/Athletic</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Lengte (cm)</label>
+            <input id="height" type="number" min="140" max="210" value="172" />
+          </div>
+          <div>
+            <label>Gewicht (kg)</label>
+            <input id="weight" type="number" min="40" max="140" value="68" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Borst/Chest (cm)</label>
+            <input id="chest" type="number" min="70" max="140" value="92" />
+          </div>
+          <div>
+            <label>Taille/Waist (cm)</label>
+            <input id="waist" type="number" min="55" max="130" value="76" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Heup/Hip (cm)</label>
+            <input id="hip" type="number" min="75" max="150" value="98" />
+          </div>
+          <div>
+            <label>Schouderbreedte (cm)</label>
+            <input id="shoulder" type="number" min="35" max="60" value="41" />
+          </div>
+        </div>
+        <label>Optioneel: silhouet-foto (alleen lokaal)</label>
+        <input id="photo" type="file" accept="image/*" />
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn accent" id="updateBtn">Avatar bijwerken</button>
+          <button class="btn ghost" id="saveBtn" title="Slaat basisgegevens lokaal op">Opslaan</button>
+          <button class="btn ghost" id="resetBtn">Reset</button>
+        </div>
+        <details>
+          <summary>Gegevens (lokaal)</summary>
+          <pre class="mono" id="debug"></pre>
+        </details>
+      </div>
+    </section>
+
+    <!-- CENTER: VIEWPORT -->
+    <section class="card viewport">
+      <div class="stage" id="stage">
+        <div class="toolbar">
+          <button class="btn" id="frontBtn">Voor</button>
+          <button class="btn" id="sideBtn">Zij</button>
+          <button class="btn" id="downloadPng">Export PNG</button>
+        </div>
+        <svg id="avatarSvg" viewBox="0 0 420 560" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#f4d1bd"/>
+              <stop offset="100%" stop-color="#cfab97"/>
+            </linearGradient>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.35"/>
+            </filter>
+          </defs>
+          <ellipse cx="210" cy="535" rx="150" ry="16" fill="#0b1018" />
+          <g id="avatar" filter="url(#shadow)">
+            <circle id="head" cx="210" cy="75" r="34" fill="url(#skin)" />
+            <rect id="neck" x="198" y="102" width="24" height="14" rx="6" fill="url(#skin)" />
+            <path id="torso" fill="url(#skin)" d="M160,116 C150,160 150,210 160,250 C170,290 250,290 260,250 C270,210 270,160 260,116 Z"/>
+            <path id="armL" fill="url(#skin)" d="M155,130 C145,170 140,220 142,255 C150,275 165,275 168,255 C166,220 170,180 180,130 Z"/>
+            <path id="armR" fill="url(#skin)" d="M265,130 C275,170 280,220 278,255 C270,275 255,275 252,255 C254,220 250,180 240,130 Z"/>
+            <path id="hips" fill="url(#skin)" d="M160,250 C155,270 160,290 170,305 L250,305 C260,290 265,270 260,250 Z"/>
+            <!-- legs aligned under hips -->
+            <path id="legL" fill="url(#skin)" d="M180,305 C174,350 174,420 174,460 L194,460 C194,420 196,350 198,305 Z"/>
+            <path id="legR" fill="url(#skin)" d="M226,305 C220,350 218,420 218,460 L238,460 C238,420 240,350 246,305 Z"/>
+            <g id="garment"></g>
+          </g>
+          <!-- aparte groep voor het zijaanzicht van de avatar -->
+          <g id="avatarSide" filter="url(#shadow)" style="display:none;">
+            <circle id="headSide" cx="210" cy="75" r="34" fill="url(#skin)" />
+            <rect id="neckSide" x="198" y="102" width="24" height="14" rx="6" fill="url(#skin)" />
+            <!-- torso van zijaanzicht wordt dynamisch gevuld in JS -->
+            <path id="torsoSide" fill="url(#skin)" d="" />
+            <!-- arm en been in zijaanzicht worden dynamisch gepositioneerd -->
+            <rect id="armSide" fill="url(#skin)" x="0" y="0" width="0" height="0" />
+            <rect id="legSide" fill="url(#skin)" x="0" y="0" width="0" height="0" />
+            <g id="garmentSide"></g>
+          </g>
+        </svg>
+        <div class="legend" id="legend">Voorzijde · Avatar 172 cm</div>
+      </div>
+    </section>
+
+    <!-- RIGHT: CATALOG -->
+    <section class="card catalog">
+      <h2>Producten</h2>
+      <div class="content">
+        <div class="grid" id="catalog"></div>
+        <details open>
+          <summary>Maattabellen</summary>
+        <div class="mono" id="sizeTables"></div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <div class="statusbar">
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <span class="tag" id="selTop">Top: n.v.t.</span>
+      <span class="tag" id="selBottom">Broek: n.v.t.</span>
+      <span class="tag" id="selColor">Kleur: n.v.t.</span>
+      <span class="tag" id="selSize">Maat: n.v.t.</span>
+    </div>
+    <div>
+      <span class="fit" id="fitLabel">—</span>
+    </div>
+  </div>
+
+  <footer class="mono">Mockup-doel: avatar bewerken → kleding kiezen → visuele try-on → maatadvies. Alles lokaal, geen externe libs.</footer>
+
+<script>
+(()=>{
+  // ------- DATA MODEL -------
+  const EASE = { top: 8, hoodie: 12, jeansWaist: 4, jeansHip: 6, dressBust: 6, dressWaist: 6, dressHip: 8 }; // cm
+  const PRODUCTS = [
+    { id:'tee', name:'T‑shirt Basic', type:'top', price:19.95, colors:['#2a58d4','#111111','#d91e36','#2f9e44'], sizes:{ XS:{chest:86}, S:{chest:92}, M:{chest:98}, L:{chest:104}, XL:{chest:110} } },
+    { id:'sweater', name:'Trui Comfort', type:'hoodie', price:49.00, colors:['#445b77','#111111','#7f5af0','#e67e22'], sizes:{ XS:{chest:94}, S:{chest:100}, M:{chest:108}, L:{chest:116}, XL:{chest:124} } },
+    { id:'jeans', name:'Broek Slim', type:'bottom', price:69.00, colors:['#2d3a57','#1a2538','#3f4f74'], sizes:{ 28:{waist:74,hip:90}, 30:{waist:78,hip:94}, 32:{waist:82,hip:98}, 34:{waist:86,hip:102}, 36:{waist:90,hip:106} } },
+    { id:'dress', name:'Jurk A‑lijn', type:'dress', price:59.00, colors:['#ad2e95','#1f6f8b','#0b7285','#333333'], sizes:{ XS:{bust:84,waist:66,hip:90}, S:{bust:88,waist:70,hip:94}, M:{bust:94,waist:76,hip:100}, L:{bust:100,waist:82,hip:106}, XL:{bust:106,waist:88,hip:112} } }
+  ];
+
+  const state = {
+    view:'front',
+    // stel mannelijk standaard in
+    avatar:{gender:'male', bodyType:'regular', height:172, weight:68, chest:92, waist:76, hip:98, shoulder:41},
+    // top and bottom slots allow multiple garments simultaneously
+    top:{ product:null, color:null, size:null, wearing:false },
+    bottom:{ product:null, color:null, size:null, wearing:false }
+    ,activeSlot:null
+  };
+
+  const $ = sel => document.querySelector(sel);
+
+  function save(){ try{ localStorage.setItem('virtuPas', JSON.stringify(state.avatar)); }catch(e){} }
+  function load(){ try{ const a = localStorage.getItem('virtuPas'); if(a){ Object.assign(state.avatar, JSON.parse(a)); } }catch(e){} }
+
+  // ------- HELPERS -------
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  const map=(v,inMin,inMax,outMin,outMax)=> outMin + (v-inMin)*(outMax-outMin)/(inMax-inMin);
+
+  // ------- AVATAR RENDER -------
+  function updateAvatarSvg(){
+    const a = state.avatar;
+    $('#legend').textContent = (state.view==='front'?'Voorzijde':'Zijaanzicht') + ' · Avatar ' + a.height + ' cm';
+    const chestW = clamp(map(a.chest, 78, 112, 72, 112), 60, 128);
+    const waistW = clamp(map(a.waist, 60, 100, 58, 96), 48, 114);
+    const hipW   = clamp(map(a.hip  , 84, 116, 82, 118), 70, 134);
+    const shoulders = clamp(map(a.shoulder, 36, 50, 90, 130), 80, 140);
+    // update torso and limbs for het vooraanzicht (front)
+    // arms zijn dynamisch afhankelijk van lichaamstype (dikker of dunner)
+    const armFactor = (a.bodyType==='slim' ? 0.7 : a.bodyType==='curvy' ? 1.3 : 1);
+    // torso
+    $('#torso').setAttribute('d', `M ${210 - shoulders/2},116 C ${210 - chestW/2},160 ${210 - waistW/2},210 ${210 - hipW/2},250 C ${210 + hipW/2},290 ${210 + hipW/2},290 ${210 + hipW/2},250 C ${210 + waistW/2},210 ${210 + chestW/2},160 ${210 + shoulders/2},116 Z`);
+    // arms (left/right) scaled by armFactor
+    $('#armL').setAttribute('d', `M ${210 - shoulders/2 - 6*armFactor},130 C ${210 - shoulders/2 - 16*armFactor},170 ${210 - shoulders/2 - 22*armFactor},220 ${210 - shoulders/2 - 20*armFactor},255 C ${210 - shoulders/2 - 12*armFactor},275 ${210 - shoulders/2 + 3*armFactor},275 ${210 - shoulders/2 + 6*armFactor},255 C ${210 - shoulders/2 + 4*armFactor},220 ${210 - shoulders/2 + 12*armFactor},180 ${210 - shoulders/2 + 22*armFactor},130 Z`);
+    $('#armR').setAttribute('d', `M ${210 + shoulders/2 + 6*armFactor},130 C ${210 + shoulders/2 + 16*armFactor},170 ${210 + shoulders/2 + 22*armFactor},220 ${210 + shoulders/2 + 20*armFactor},255 C ${210 + shoulders/2 + 12*armFactor},275 ${210 + shoulders/2 - 3*armFactor},275 ${210 + shoulders/2 - 6*armFactor},255 C ${210 + shoulders/2 - 4*armFactor},220 ${210 + shoulders/2 - 12*armFactor},180 ${210 + shoulders/2 - 22*armFactor},130 Z`);
+    // heupen
+    $('#hips').setAttribute('d', `M ${210 - hipW/2},250 C ${210 - hipW/2 - 6},270 ${210 - hipW/2 + 2},290 ${210 - hipW/2 + 12},305 L ${210 + hipW/2 - 12},305 C ${210 + hipW/2 - 2},290 ${210 + hipW/2 + 6},270 ${210 + hipW/2},250 Z`);
+    // benen: links en rechts symmetrisch op basis van inner
+    const inner = clamp(hipW/6 + 14, 20, 36);
+    // links
+    const legL_m  = 210 - inner;
+    const legL_c1 = 210 - inner - 6;
+    const legL_c2 = 210 - inner - 6;
+    const legL_c3 = 210 - inner - 6;
+    const legL_l  = 210 - inner + 14;
+    const legL_c4 = 210 - inner + 14;
+    const legL_c5 = 210 - inner + 16;
+    const legL_z  = 210 - inner + 18;
+    $('#legL').setAttribute('d', `M ${legL_m},305 C ${legL_c1},350 ${legL_c2},420 ${legL_c3},460 L ${legL_l},460 C ${legL_c4},420 ${legL_c5},350 ${legL_z},305 Z`);
+    // rechts (spiegeling)
+    const legR_m  = 420 - legL_m;
+    const legR_c1 = 420 - legL_c1;
+    const legR_c2 = 420 - legL_c2;
+    const legR_c3 = 420 - legL_c3;
+    const legR_l  = 420 - legL_l;
+    const legR_c4 = 420 - legL_c4;
+    const legR_c5 = 420 - legL_c5;
+    const legR_z  = 420 - legL_z;
+    $('#legR').setAttribute('d', `M ${legR_m},305 C ${legR_c1},350 ${legR_c2},420 ${legR_c3},460 L ${legR_l},460 C ${legR_c4},420 ${legR_c5},350 ${legR_z},305 Z`);
+
+    // --- zijaanzicht berekenen ---
+    // bereken dieptes voor side profiel (schouder/chest/waist/hip)
+    const chestSideW    = chestW * 0.5;
+    const waistSideW    = waistW * 0.5;
+    const hipSideW      = hipW   * 0.5;
+    const shoulderSideW = shoulders * 0.5;
+    const xBack = 210 - shoulderSideW/2;
+    const topY   = 116;
+    const chestY = 160;
+    const waistY = 210;
+    const hipY   = 250;
+    const xShoulder = xBack + shoulderSideW;
+    const xChest    = xBack + chestSideW;
+    const xWaist    = xBack + waistSideW;
+    const xHip      = xBack + hipSideW;
+    // vorm van het bovenlichaam voor zijaanzicht
+    const torsoSidePath = `M ${xBack},${topY} L ${xShoulder},${topY} L ${xChest},${chestY} L ${xWaist},${waistY} L ${xHip},${hipY} L ${xBack},${hipY} Z`;
+    $('#torsoSide').setAttribute('d', torsoSidePath);
+    // arm voor zijaanzicht: breedte afhankelijk van schouderdiepte en lichaamstype
+    const armSideWidth  = shoulderSideW * 0.25 * armFactor;
+    const armSideHeight = 130;
+    const armSideX = xShoulder;
+    const armSideY = 130;
+    $('#armSide').setAttribute('x', armSideX);
+    $('#armSide').setAttribute('y', armSideY);
+    $('#armSide').setAttribute('width', armSideWidth);
+    $('#armSide').setAttribute('height', armSideHeight);
+    // been voor zijaanzicht
+    const legSideWidth  = hipSideW * 0.4;
+    const legSideHeight = 155; // 460-305
+    const legSideX = xBack + hipSideW/2 - legSideWidth/2;
+    const legSideY = 305;
+    $('#legSide').setAttribute('x', legSideX);
+    $('#legSide').setAttribute('y', legSideY);
+    $('#legSide').setAttribute('width', legSideWidth);
+    $('#legSide').setAttribute('height', legSideHeight);
+
+    // tonen/hiden van groepen en positioneren
+    const frontGroup  = document.getElementById('avatar');
+    const sideGroup   = document.getElementById('avatarSide');
+    if(state.view==='front'){
+      frontGroup.style.display = 'inline';
+      sideGroup.style.display  = 'none';
+      // verticaal omhoog verschuiven
+      frontGroup.setAttribute('transform','translate(0,-60)');
+    } else {
+      frontGroup.style.display = 'none';
+      sideGroup.style.display  = 'inline';
+      sideGroup.setAttribute('transform','translate(0,-60)');
+    }
+  }
+
+  // ------- SIZE ↔ VISUAL COUPLING -------
+  // scale factor based on garment size vs avatar measurements
+  function garmentScale(product, size){
+    const a = state.avatar;
+    const sz = size || null;
+    if(product.type==='top' || product.type==='hoodie'){
+      const ease = product.type==='hoodie'?EASE.hoodie:EASE.top;
+      const measChest = product.sizes && product.sizes[sz] ? product.sizes[sz].chest : undefined;
+      const meas = measChest !== undefined ? measChest : (a.chest + ease);
+      // bredere schaal zodat kleine avatars in grote maten oversize kleding zien
+      return clamp(meas / (a.chest + ease), 0.7, 1.4);
+    }
+    if(product.type==='bottom'){
+      const m = (product.sizes && product.sizes[sz]) ? product.sizes[sz] : {waist:a.waist+EASE.jeansWaist, hip:a.hip+EASE.jeansHip};
+      return clamp((m.waist + m.hip) / (a.waist + a.hip + EASE.jeansWaist + EASE.jeansHip), 0.7, 1.4);
+    }
+    if(product.type==='dress'){
+      const m = (product.sizes && product.sizes[sz]) ? product.sizes[sz] : {bust:a.chest+EASE.dressBust, waist:a.waist+EASE.dressWaist, hip:a.hip+EASE.dressHip};
+      return clamp((m.bust + m.waist + m.hip) / (a.chest + a.waist + a.hip + EASE.dressBust + EASE.dressWaist + EASE.dressHip), 0.7, 1.4);
+    }
+    return 1;
+  }
+
+  // ------- GARMENT RENDER -------
+  function renderGarment(){
+    // bepaal de juiste groep afhankelijk van het huidige zicht (front/side)
+    const isFront = (state.view==='front');
+    const grp = isFront ? document.getElementById('garment') : document.getElementById('garmentSide');
+    grp.innerHTML = '';
+    const a = state.avatar;
+    // bereken basisafmetingen voor vooraanzicht
+    const baseChestW = clamp(map(a.chest, 78, 112, 72, 112), 60, 128);
+    const baseWaistW = clamp(map(a.waist, 60, 100, 58, 96), 48, 114);
+    const baseHipW   = clamp(map(a.hip  , 84, 116, 82, 118), 70, 134);
+    const shouldersW = clamp(map(a.shoulder, 36, 50, 90, 130), 80, 140);
+    // side-specific basisafmetingen (diepte)
+    const chestSideW    = baseChestW * 0.5;
+    const waistSideW    = baseWaistW * 0.5;
+    const hipSideW      = baseHipW   * 0.5;
+    const shoulderSideW = shouldersW * 0.5;
+    // helper om top/dress te tekenen in vooraanzicht
+    function drawTopFront(product,color,size){
+      const f = garmentScale(product, size);
+      const chestW = baseChestW * f;
+      const waistW = baseWaistW * f;
+      const hipW   = baseHipW   * f;
+      if(product.type==='top' || product.type==='hoodie'){
+        // torso
+        const torsoPath = `M ${210 - chestW/2 - 6},116 C ${210 - chestW/2 - 8},160 ${210 - waistW/2 - 6},210 ${210 - waistW/2 - 4},250 L ${210 + waistW/2 + 4},250 C ${210 + waistW/2 + 6},210 ${210 + chestW/2 + 8},160 ${210 + chestW/2 + 6},116 Z`;
+        const torsoEl = document.createElementNS('http://www.w3.org/2000/svg','path');
+        torsoEl.setAttribute('d', torsoPath);
+        torsoEl.setAttribute('fill', color);
+        torsoEl.setAttribute('fill-opacity', product.type==='hoodie'?0.96:0.9);
+        torsoEl.setAttribute('stroke','#0a0f18'); torsoEl.setAttribute('stroke-opacity','0.35'); torsoEl.setAttribute('stroke-width','1');
+        grp.appendChild(torsoEl);
+        // sleeves: proportional to chest width so that larger sizes yield wider sleeves
+        const sleeveLength = product.type==='hoodie'? 130 : 60;
+        const sleeveY1 = 120;
+        const leftX  = 210 - shouldersW/2 - 12;
+        const rightX = 210 + shouldersW/2;
+        const leftW  = chestW * 0.25;
+        const rightW = chestW * 0.25;
+        ['left','right'].forEach((side,idx)=>{
+          const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+          const x = idx===0 ? leftX : rightX;
+          const w = idx===0 ? leftW : rightW;
+          rect.setAttribute('x', x);
+          rect.setAttribute('y', sleeveY1);
+          rect.setAttribute('width', w);
+          rect.setAttribute('height', sleeveLength);
+          rect.setAttribute('fill', color);
+          rect.setAttribute('fill-opacity', product.type==='hoodie'?0.96:0.9);
+          rect.setAttribute('stroke','#0a0f18'); rect.setAttribute('stroke-opacity','0.35'); rect.setAttribute('stroke-width','1');
+          grp.appendChild(rect);
+        });
+      } else if(product.type==='dress'){
+        const path = `M ${210 - chestW/2 - 4},116 C ${210 - chestW/2},160 ${210 - waistW/2},200 ${210 - hipW/2},230 L ${210 - hipW/2 - 18},460 L ${210 + hipW/2 + 18},460 L ${210 + hipW/2},230 C ${210 + waistW/2},200 ${210 + chestW/2},160 ${210 + chestW/2 + 4},116 Z`;
+        const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+        p.setAttribute('d', path);
+        p.setAttribute('fill', color);
+        p.setAttribute('fill-opacity','0.9');
+        p.setAttribute('stroke','#0a0f18'); p.setAttribute('stroke-opacity','0.35'); p.setAttribute('stroke-width','1');
+        grp.appendChild(p);
+      }
+    }
+    // helper om broek te tekenen in vooraanzicht
+    function drawBottomFront(product,color,size){
+      const f = garmentScale(product, size);
+      const hipW = baseHipW * f;
+      if(product.type==='bottom'){
+        const gap = 14;
+        const midX = 210;
+        const hipY = 250;
+        const hemY = 460;
+        const legHeight = hemY - hipY;
+        const margin = 8;
+        const leftOuterX = midX - hipW/2 + margin;
+        const rightOuterX= midX + hipW/2 - margin;
+        const leftInnerX = midX - gap/2;
+        const rightInnerX= midX + gap/2;
+        const leftWidth  = leftInnerX - leftOuterX;
+        const rightWidth = rightOuterX - rightInnerX;
+        const rectL = document.createElementNS('http://www.w3.org/2000/svg','rect');
+        rectL.setAttribute('x', leftOuterX);
+        rectL.setAttribute('y', hipY);
+        rectL.setAttribute('width', leftWidth);
+        rectL.setAttribute('height', legHeight);
+        rectL.setAttribute('fill', color);
+        rectL.setAttribute('fill-opacity','0.9');
+        rectL.setAttribute('stroke','#0a0f18'); rectL.setAttribute('stroke-opacity','0.35'); rectL.setAttribute('stroke-width','1');
+        const rectR = document.createElementNS('http://www.w3.org/2000/svg','rect');
+        rectR.setAttribute('x', rightInnerX);
+        rectR.setAttribute('y', hipY);
+        rectR.setAttribute('width', rightWidth);
+        rectR.setAttribute('height', legHeight);
+        rectR.setAttribute('fill', color);
+        rectR.setAttribute('fill-opacity','0.9');
+        rectR.setAttribute('stroke','#0a0f18'); rectR.setAttribute('stroke-opacity','0.35'); rectR.setAttribute('stroke-width','1');
+        const waistband = document.createElementNS('http://www.w3.org/2000/svg','rect');
+        waistband.setAttribute('x', leftOuterX);
+        waistband.setAttribute('y', hipY - 20);
+        waistband.setAttribute('width', rightOuterX - leftOuterX);
+        waistband.setAttribute('height', 20);
+        waistband.setAttribute('fill', color);
+        waistband.setAttribute('fill-opacity','0.9');
+        waistband.setAttribute('stroke','#0a0f18'); waistband.setAttribute('stroke-opacity','0.35'); waistband.setAttribute('stroke-width','1');
+        grp.appendChild(waistband);
+        grp.appendChild(rectL);
+        grp.appendChild(rectR);
+      } else if(product.type==='dress'){
+        // teken jurk als geheel bij front (dress treated in top)
+        const f = garmentScale(product, size);
+        const chestW = baseChestW * f;
+        const waistW = baseWaistW * f;
+        const hipW2  = baseHipW * f;
+        const path = `M ${210 - chestW/2 - 4},116 C ${210 - chestW/2},160 ${210 - waistW/2},200 ${210 - hipW2/2},230 L ${210 - hipW2/2 - 18},460 L ${210 + hipW2/2 + 18},460 L ${210 + hipW2/2},230 C ${210 + waistW/2},200 ${210 + chestW/2},160 ${210 + chestW/2 + 4},116 Z`;
+        const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+        p.setAttribute('d', path);
+        p.setAttribute('fill', color);
+        p.setAttribute('fill-opacity','0.9');
+        p.setAttribute('stroke','#0a0f18'); p.setAttribute('stroke-opacity','0.35'); p.setAttribute('stroke-width','1');
+        grp.appendChild(p);
+      }
+    }
+    // helper om top/dress te tekenen in zijaanzicht
+    function drawTopSide(product,color,size){
+      const f = garmentScale(product, size);
+      // schalen van diepte
+      const chestS = chestSideW * f;
+      const waistS = waistSideW * f;
+      const hipS   = hipSideW   * f;
+      const shoulderS = shoulderSideW * f;
+      const xBack = 210 - shoulderS/2;
+      const xShoulder = xBack + shoulderS;
+      const xChest    = xBack + chestS;
+      const xWaist    = xBack + waistS;
+      const xHip      = xBack + hipS;
+      if(product.type==='top' || product.type==='hoodie'){
+        const path = `M ${xBack},116 L ${xShoulder},116 L ${xChest},160 L ${xWaist},210 L ${xHip},250 L ${xBack},250 Z`;
+        const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+        p.setAttribute('d', path);
+        p.setAttribute('fill', color);
+        p.setAttribute('fill-opacity', product.type==='hoodie'?0.96:0.9);
+        p.setAttribute('stroke','#0a0f18'); p.setAttribute('stroke-opacity','0.35'); p.setAttribute('stroke-width','1');
+        grp.appendChild(p);
+        // sleeve: side view only one sleeve; width relative to shoulder depth
+        const sleeveW  = shoulderS * 0.25;
+        const sleeveH  = (product.type==='hoodie'? 130 : 60);
+        const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+        rect.setAttribute('x', xShoulder);
+        rect.setAttribute('y', 120);
+        rect.setAttribute('width', sleeveW);
+        rect.setAttribute('height', sleeveH);
+        rect.setAttribute('fill', color);
+        rect.setAttribute('fill-opacity', product.type==='hoodie'?0.96:0.9);
+        rect.setAttribute('stroke','#0a0f18'); rect.setAttribute('stroke-opacity','0.35'); rect.setAttribute('stroke-width','1');
+        grp.appendChild(rect);
+      } else if(product.type==='dress'){
+        // jurk: flared onderkant
+        const xBack2 = xBack;
+        const xChest2= xBack + chestS;
+        const xWaist2= xBack + waistS;
+        const xHip2  = xBack + hipS;
+        const lowerBack = xBack2 - hipS * 0.3;
+        const lowerFront = xHip2 + hipS * 0.3;
+        const path = `M ${xBack2},116 L ${xChest2},116 L ${xWaist2},200 L ${xHip2},230 L ${lowerFront},460 L ${lowerBack},460 L ${xBack2},230 Z`;
+        const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+        p.setAttribute('d', path);
+        p.setAttribute('fill', color);
+        p.setAttribute('fill-opacity','0.9');
+        p.setAttribute('stroke','#0a0f18'); p.setAttribute('stroke-opacity','0.35'); p.setAttribute('stroke-width','1');
+        grp.appendChild(p);
+      }
+    }
+    // helper om broek te tekenen in zijaanzicht
+    function drawBottomSide(product,color,size){
+      const f = garmentScale(product, size);
+      const hipS = hipSideW * f;
+      // volledig blok voor broek: van heup tot zoom
+      if(product.type==='bottom'){
+        const xBack = 210 - (hipS)/2;
+        const xFront = xBack + hipS;
+        const yTop = 250;
+        const yBottom = 460;
+        const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+        rect.setAttribute('x', xBack);
+        rect.setAttribute('y', yTop);
+        rect.setAttribute('width', hipS);
+        rect.setAttribute('height', yBottom - yTop);
+        rect.setAttribute('fill', color);
+        rect.setAttribute('fill-opacity','0.9');
+        rect.setAttribute('stroke','#0a0f18'); rect.setAttribute('stroke-opacity','0.35'); rect.setAttribute('stroke-width','1');
+        // waistband
+        const waistRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+        waistRect.setAttribute('x', xBack);
+        waistRect.setAttribute('y', yTop - 20);
+        waistRect.setAttribute('width', hipS);
+        waistRect.setAttribute('height', 20);
+        waistRect.setAttribute('fill', color);
+        waistRect.setAttribute('fill-opacity','0.9');
+        waistRect.setAttribute('stroke','#0a0f18'); waistRect.setAttribute('stroke-opacity','0.35'); waistRect.setAttribute('stroke-width','1');
+        grp.appendChild(waistRect);
+        grp.appendChild(rect);
+      } else if(product.type==='dress'){
+        // jurk al getekend via top logic
+        drawTopSide(product,color,size);
+      }
+    }
+    // kies correcte draw functions afhankelijk van view
+    function drawTop(product,color,size){
+      if(isFront) drawTopFront(product,color,size); else drawTopSide(product,color,size);
+    }
+    function drawBottom(product,color,size){
+      if(isFront) drawBottomFront(product,color,size); else drawBottomSide(product,color,size);
+    }
+    // teken bovenkleding indien gedragen
+    if(state.top.wearing && state.top.product){
+      const p = state.top.product;
+      const c = state.top.color || p.colors[0];
+      const s = state.top.size;
+      drawTop(p,c,s);
+    }
+    // teken onderkleding indien gedragen
+    if(state.bottom.wearing && state.bottom.product){
+      const p = state.bottom.product;
+      const c = state.bottom.color || p.colors[0];
+      const s = state.bottom.size;
+      drawBottom(p,c,s);
+    }
+  }
+
+  // ------- SIZE RECOMMENDATION -------
+  function recommend(product){
+    const a = state.avatar;
+    let best = null; let label = '—'; let cls='';
+    if(product.type==='top' || product.type==='hoodie'){
+      const ease = product.type==='hoodie'?EASE.hoodie:EASE.top;
+      for(const [size,meas] of Object.entries(product.sizes)){
+        const delta = (meas.chest - a.chest) - ease; // >=0 means fits
+        if(delta>=0 && (!best || delta < best.delta)) best = {size,delta};
+      }
+      if(!best) { label='Aan de krappe kant – kies groter'; cls='bad'; }
+      else{ label = `Advies: ${best.size}`; cls= best.delta<4? 'warn':'ok'; }
+    } else if(product.type==='bottom'){
+      for(const [size,meas] of Object.entries(product.sizes)){
+        const dW = (meas.waist - a.waist) - EASE.jeansWaist;
+        const dH = (meas.hip - a.hip) - EASE.jeansHip;
+        const bad = (dW<0 || dH<0);
+        const score = Math.abs(dW)+Math.abs(dH);
+        if(!bad && (!best || score<best.score)) best = {size,score};
+      }
+      if(!best) { label='Waarschijnlijk te strak – kies grotere maat'; cls='bad'; }
+      else { label = `Advies: W${best.size}`; cls='ok'; }
+    } else if(product.type==='dress'){
+      for(const [size,meas] of Object.entries(product.sizes)){
+        const ok = meas.bust >= a.chest + EASE.dressBust &&
+                   meas.waist>= a.waist + EASE.dressWaist &&
+                   meas.hip  >= a.hip   + EASE.dressHip;
+        const score = (meas.bust - a.chest) + (meas.waist - a.waist) + (meas.hip - a.hip);
+        if(ok && (!best || score<best.score)) best = {size,score};
+      }
+      if(!best) { label='Te strak bij 1 of meer punten'; cls='bad'; }
+      else { label = `Advies: ${best.size}`; cls='ok'; }
+    }
+    $('#fitLabel').textContent = label;
+    $('#fitLabel').className = 'fit ' + (cls||'bad');
+    return best?.size || null;
+  }
+
+  // ------- STATUS BAR UPDATE -------
+  function updateStatusBar(){
+    // update top tag
+    if(state.top.wearing && state.top.product){
+      const name = state.top.product.name;
+      const size = state.top.size ? ` ${state.top.size}` : '';
+      $('#selTop').textContent = `Top: ${name}${size}`;
+    } else {
+      $('#selTop').textContent = 'Top: n.v.t.';
+    }
+    // update bottom tag
+    if(state.bottom.wearing && state.bottom.product){
+      const name = state.bottom.product.name;
+      const size = state.bottom.size ? ` ${state.bottom.size}` : '';
+      $('#selBottom').textContent = `Broek: ${name}${size}`;
+    } else {
+      $('#selBottom').textContent = 'Broek: n.v.t.';
+    }
+    // update color/size tags based on active slot
+    if(state.activeSlot && state[state.activeSlot]){
+      const slot = state[state.activeSlot];
+      $('#selColor').textContent = 'Kleur: ' + (slot.color || 'n.v.t.');
+      $('#selSize').textContent  = 'Maat: ' + (slot.size  || 'n.v.t.');
+    } else {
+      $('#selColor').textContent = 'Kleur: n.v.t.';
+      $('#selSize').textContent  = 'Maat: n.v.t.';
+    }
+  }
+
+  // ------- CATALOG RENDER -------
+  function renderCatalog(){
+    const grid = $('#catalog'); grid.innerHTML='';
+    const tables = [];
+    for(const p of PRODUCTS){
+      if(p.id==='dress' && state.avatar.gender==='male') continue; // simpele filter
+      const card = document.createElement('div'); card.className='item';
+      const colors = p.colors.map(c=>`<span class="color-swatch" title="${c}" data-color="${c}" style="background:${c}"></span>`).join('');
+      const sizeKeys = Object.keys(p.sizes);
+      const sizeBtns = sizeKeys.map(s=>`<button data-size="${s}">${s}</button>`).join('');
+      card.innerHTML = `
+        <h3>${p.name}</h3>
+        <div class="tag">${p.type}</div> <span class="price">€${p.price.toFixed(2)}</span>
+        <div style="margin:8px 0">${colors}</div>
+        <div class="sizes">${sizeBtns}</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn primary" data-try="${p.id}">Probeer aan</button>
+          <button class="btn" data-adv="${p.id}">Maatadvies</button>
+        </div>
+      `;
+      grid.appendChild(card);
+
+      // events
+      // identify slot for this product
+      const slot = (p.type === 'bottom') ? 'bottom' : 'top';
+      // Highlight active size if currently selected for this product
+      card.querySelectorAll('.sizes button').forEach(btn=>{
+        const size = btn.dataset.size;
+        // set active class if this product is currently worn in its slot and size matches
+        if(state[slot].product && state[slot].product.id === p.id && state[slot].size === size){
+          btn.classList.add('active');
+        }
+        btn.addEventListener('click', ()=>{
+          // remove active highlight for this card
+          card.querySelectorAll('.sizes button').forEach(b=>b.classList.remove('active'));
+          btn.classList.add('active');
+          state.activeSlot = slot;
+          state[slot].size = size;
+          updateStatusBar();
+          // if currently wearing this product in this slot, update garment
+          if(state[slot].product && state[slot].product.id === p.id && state[slot].wearing){ renderGarment(); }
+        });
+      });
+      // color swatch events
+      card.querySelectorAll('.color-swatch').forEach(el=>{
+        el.addEventListener('click', ()=>{
+          state.activeSlot = slot;
+          state[slot].color = el.dataset.color;
+          updateStatusBar();
+          renderGarment();
+        });
+      });
+      // try-on / toggle button behaviour
+      const tryBtn = card.querySelector('[data-try]');
+      // update initial label depending on state
+      if(state[slot].product && state[slot].product.id === p.id && state[slot].wearing){ tryBtn.textContent = 'Uitdoen'; }
+      tryBtn.addEventListener('click', () => {
+        // If same product is currently worn in its slot, remove it
+        if(state[slot].product && state[slot].product.id === p.id && state[slot].wearing){
+          state[slot].wearing = false;
+          updateStatusBar();
+          renderGarment();
+          // re-render catalog to update other buttons and highlights
+          renderCatalog();
+          return;
+        }
+        // else, wear this product in its slot
+        state.activeSlot = slot;
+        state[slot].product = p;
+        // set color to previously selected for this slot or default to first option
+        if(!state[slot].color) state[slot].color = p.colors[0];
+        // choose size: existing size or recommended or middle
+        if(!state[slot].size){
+          const recommended = recommend(p);
+          state[slot].size = recommended || sizeKeys[Math.floor(sizeKeys.length/2)];
+        }
+        state[slot].wearing = true;
+        updateStatusBar();
+        renderGarment();
+        // re-render catalog to update other buttons and highlight selected size on this product
+        renderCatalog();
+      });
+      // maatadvies button
+      card.querySelector('[data-adv]').addEventListener('click', ()=>{
+        state.activeSlot = slot;
+        state[slot].product = p;
+        updateStatusBar();
+        recommend(p);
+      });
+
+      // build human-readable size table for this product
+      const sizeKeysOrdered = Object.keys(p.sizes);
+       const measurementKeys = Object.keys(p.sizes[sizeKeysOrdered[0]] || {});
+       // map english keys to Dutch labels
+       const keyMap = { chest:'Borst', waist:'Taille', hip:'Heup', bust:'Borst', shoulder:'Schouder', inseam:'Binnenbeen' };
+       let tableHtml = `<h4>${p.name} (${p.type})</h4><table style="border-collapse:collapse;margin-bottom:8px;width:100%"><thead><tr><th style="border:1px solid #2b3347;padding:4px">Maat</th>`;
+       measurementKeys.forEach(key=>{ const label = keyMap[key] || key; tableHtml += `<th style="border:1px solid #2b3347;padding:4px">${label}</th>`; });
+      tableHtml += '</tr></thead><tbody>';
+      sizeKeysOrdered.forEach(size => {
+        tableHtml += `<tr><td style="border:1px solid #2b3347;padding:4px">${size}</td>`;
+        measurementKeys.forEach(key => {
+          const val = p.sizes[size][key];
+          tableHtml += `<td style="border:1px solid #2b3347;padding:4px">${val}</td>`;
+        });
+        tableHtml += '</tr>';
+      });
+      tableHtml += '</tbody></table>';
+      tables.push(tableHtml);
+    }
+    // insert the compiled tables into the container
+    $('#sizeTables').innerHTML = tables.join('');
+  }
+
+  // ------- FORM & BUTTONS -------
+  function bindForm(){
+    // init from local storage
+    load();
+    $('#gender').value = state.avatar.gender;
+    $('#bodyType').value = state.avatar.bodyType;
+    ['height','weight','chest','waist','hip','shoulder'].forEach(id=>{ $('#'+id).value = state.avatar[id]; });
+
+    // apply current form to state and update visuals
+    const apply = () => {
+      state.avatar = {
+        gender: $('#gender').value,
+        bodyType: $('#bodyType').value,
+        height: +$('#height').value,
+        weight: +$('#weight').value,
+        chest: +$('#chest').value,
+        waist: +$('#waist').value,
+        hip: +$('#hip').value,
+        shoulder: +$('#shoulder').value
+      };
+      $('#debug').textContent = JSON.stringify(state.avatar,null,2);
+      updateAvatarSvg();
+      renderGarment();
+      renderCatalog();
+      updateStatusBar();
+      save();
+    };
+
+    // live updates on input & change
+    ['gender','bodyType','height','weight','chest','waist','hip','shoulder'].forEach(id=>{
+      $('#'+id).addEventListener('input', apply);
+      $('#'+id).addEventListener('change', apply);
+    });
+    $('#updateBtn').addEventListener('click', apply);
+
+    $('#saveBtn').addEventListener('click', save);
+
+    // reset without reload: clear storage and reset state/inputs/UI
+    $('#resetBtn').addEventListener('click', ()=>{
+      localStorage.removeItem('virtuPas');
+      state.avatar = {gender:'male', bodyType:'regular', height:172, weight:68, chest:92, waist:76, hip:98, shoulder:41};
+      state.top = { product:null, color:null, size:null, wearing:false };
+      state.bottom = { product:null, color:null, size:null, wearing:false };
+      state.activeSlot = null;
+      updateStatusBar();
+      ['height','weight','chest','waist','hip','shoulder'].forEach(id=>{ $('#'+id).value = state.avatar[id]; });
+      $('#gender').value = state.avatar.gender;
+      $('#bodyType').value = state.avatar.bodyType;
+      $('#garment').innerHTML = '';
+      $('#fitLabel').textContent = '—';
+      $('#fitLabel').className = 'fit';
+      updateAvatarSvg();
+      renderCatalog();
+      $('#debug').textContent = JSON.stringify(state.avatar,null,2);
+    });
+
+    $('#frontBtn').addEventListener('click', ()=>{ state.view='front'; updateAvatarSvg(); renderGarment(); });
+    $('#sideBtn').addEventListener('click', ()=>{ state.view='side'; updateAvatarSvg(); renderGarment(); });
+
+    $('#downloadPng').addEventListener('click', exportPng);
+  }
+
+  // ------- EXPORT PNG -------
+  function exportPng(){
+    const svg = document.getElementById('avatarSvg');
+    const xml = new XMLSerializer().serializeToString(svg);
+    const svg64 = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+    const img = new Image();
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      const vb = svg.viewBox.baseVal; canvas.width = vb.width; canvas.height = vb.height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#0a0f18'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img,0,0);
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a'); a.href=url; a.download='VirtuPas_snapshot.png'; a.click();
+    };
+    img.src = svg64;
+  }
+
+  // ------- INIT -------
+  bindForm();
+  updateAvatarSvg();
+  renderCatalog();
+  updateStatusBar();
+  document.getElementById('debug').textContent = JSON.stringify(state.avatar,null,2);
+})();
+</script>
+</body>
+</html>
