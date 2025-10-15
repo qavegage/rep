@@ -2452,6 +2452,7 @@
             "Authorization": OPENROUTER_KEY,
             "Content-Type":"application/json",
             "Accept":"application/json",
+            "HTTP-Referer": (location.href || location.origin || ""),
             "X-Title":"VirtuPas NLP"
           },
           body: JSON.stringify(body)
