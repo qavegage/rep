@@ -2314,55 +2314,103 @@
   }
 })();
 </script>
-<!-- === VP Patch v5: always-on centred Maatadvies indicator ================= -->
+<!-- === VP Patch v6: centred badge + numeric pants ========================= -->
 <script>
 (() => {
-  /** Create or return the indicator, now centred in the status-bar */
+  /* -----------------------------------------------------------
+   * 0. Utility: letter ➜ numeric waist for jeans
+   * --------------------------------------------------------- */
+  const JEANS_MAP = {XS:'28', S:'30', M:'32', L:'34', XL:'36',
+                     '28':'28','30':'30','32':'32','34':'34','36':'36'};
+  const toNumJeans = s => JEANS_MAP[String(s).trim().toUpperCase()] || s;
+
+  /* -----------------------------------------------------------
+   * 1. Clean up any legacy floating badge created before patch v5
+   * --------------------------------------------------------- */
+  const stray = document.querySelector('[data-advice-indicator]');
+  if (stray && stray.parentElement === document.body) stray.remove();
+
+  /* -----------------------------------------------------------
+   * 2. Ensure & centre the badge inside .statusbar (as in v5)
+   * --------------------------------------------------------- */
   function ensureIndicator () {
     let span = document.querySelector('[data-advice-indicator]');
-    if (span) return span;                                  // already there
+    if (span) return span;
 
     const bar = document.querySelector('.statusbar');
-    if (!bar) return null;                                  // should not happen
+    if (!bar) return null;
 
-    /* 1. Build a flex “slot” that will occupy the middle of the bar */
     const slot = document.createElement('div');
-    slot.style.flex   = '1';
+    slot.style.flex = '1';
     slot.style.display = 'flex';
     slot.style.justifyContent = 'center';
     slot.style.flexWrap = 'wrap';
 
-    /* 2. Build the visual badge */
     span = document.createElement('span');
     span.setAttribute('data-advice-indicator', '');
     Object.assign(span.style, {
-      display       : 'inline-block',
-      padding       : '6px 10px',
-      borderRadius  : '8px',
-      border        : '1px solid #24314a',
-      background    : '#192235',
-      color         : '#eaf2ff',
-      fontSize      : '13px',
-      whiteSpace    : 'nowrap'
+      display      :'inline-block',
+      padding      :'6px 10px',
+      borderRadius :'8px',
+      border       :'1px solid #24314a',
+      background   :'#192235',
+      color        :'#eaf2ff',
+      fontSize     :'13px',
+      whiteSpace   :'nowrap'
     });
     span.textContent = 'Maatadvies: —';
-
     slot.appendChild(span);
 
-    /* 3. Insert <slot> as the 2nd child so:
-           [tags]  [indicator]  [fit label]  */
-    if (bar.children.length > 1) {
-      bar.insertBefore(slot, bar.children[1]);
-    } else {
-      bar.appendChild(slot);
-    }
+    (bar.children.length > 1)
+      ? bar.insertBefore(slot, bar.children[1])
+      : bar.appendChild(slot);
+
     return span;
   }
+  window.ensureIndicator = ensureIndicator;   // overwrite old one
 
-  /* Expose / override the global used elsewhere so existing code keeps working */
-  window.ensureIndicator = ensureIndicator;
+  /* -----------------------------------------------------------
+   * 3. Override setIndicator so jeans sizes are numeric
+   * --------------------------------------------------------- */
+  const origDist = window.dist;               // reuse existing helpers
+  window.setIndicator = function (kind, selectedRaw) {
+    const el = ensureIndicator();
+    let selected = selectedRaw;
+    let adv      = window.__virtupas_advice[kind];
 
-  /* Run immediately and again once DOM is ready (covers all load orders) */
+    /* convert only for pants/jeans */
+    if (kind === 'jeans') {
+      selected = toNumJeans(selectedRaw);
+      adv      = toNumJeans(adv);
+    }
+
+    /* if no advice yet */
+    if (!adv) {
+      el.style.background = '#192235';
+      el.style.color      = '#eaf2ff';
+      el.textContent      = 'Maatadvies: —';
+      return;
+    }
+
+    const d  = origDist(kind, selected, adv);
+    let bg='#192235', fg='#eaf2ff', label='';
+    if (d === 0) {
+      bg='#113624'; fg='#c5ffd7'; label='✅ goed: ' + adv;
+    } else if (d === 1) {
+      bg='#3a340f'; fg='#fff2b3';
+      label='⚠️ afwijken: advies ' + adv + ' | keuze ' + selected;
+    } else {
+      bg='#3a1212'; fg='#ffd0d0';
+      label='⛔ te veel afwijking: advies ' + adv + ' | keuze ' + selected;
+    }
+    el.style.background = bg;
+    el.style.color      = fg;
+    el.textContent      = 'Maatadvies: ' + label;
+  };
+
+  /* -----------------------------------------------------------
+   * 4. Build the badge right away so it’s never empty
+   * --------------------------------------------------------- */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', ensureIndicator, { once:true });
   } else {
@@ -2371,6 +2419,7 @@
 })();
 </script>
 <!-- ======================================================================== -->
+
 
 </body>
 </html>
