@@ -2314,105 +2314,120 @@
   }
 })();
 </script>
-<!-- === VP Patch v6: centred badge + numeric pants ========================= -->
+    
+<!-- === VP Patch v7 — instant badge + jeans numeric + colour logic ========== -->
 <script>
 (() => {
   /* -----------------------------------------------------------
-   * 0. Utility: letter ➜ numeric waist for jeans
+   * 0. Helpers
    * --------------------------------------------------------- */
   const JEANS_MAP = {XS:'28', S:'30', M:'32', L:'34', XL:'36',
                      '28':'28','30':'30','32':'32','34':'34','36':'36'};
   const toNumJeans = s => JEANS_MAP[String(s).trim().toUpperCase()] || s;
 
   /* -----------------------------------------------------------
-   * 1. Clean up any legacy floating badge created before patch v5
-   * --------------------------------------------------------- */
-  const stray = document.querySelector('[data-advice-indicator]');
-  if (stray && stray.parentElement === document.body) stray.remove();
-
-  /* -----------------------------------------------------------
-   * 2. Ensure & centre the badge inside .statusbar (as in v5)
+   * 1. Make sure **only one** indicator exists – inside .statusbar
    * --------------------------------------------------------- */
   function ensureIndicator () {
+    /* remove any legacy floating badge */
+    const stray = document.querySelector('[data-advice-indicator][data-floating]');
+    if (stray) stray.remove();
+
     let span = document.querySelector('[data-advice-indicator]');
     if (span) return span;
 
     const bar = document.querySelector('.statusbar');
-    if (!bar) return null;
+    if (!bar) return null;                      // page not ready yet
 
     const slot = document.createElement('div');
-    slot.style.flex = '1';
-    slot.style.display = 'flex';
-    slot.style.justifyContent = 'center';
-    slot.style.flexWrap = 'wrap';
+    Object.assign(slot.style, {
+      flex:'1', display:'flex', justifyContent:'center', flexWrap:'wrap'
+    });
 
     span = document.createElement('span');
-    span.setAttribute('data-advice-indicator', '');
+    span.setAttribute('data-advice-indicator','');
     Object.assign(span.style, {
-      display      :'inline-block',
-      padding      :'6px 10px',
-      borderRadius :'8px',
-      border       :'1px solid #24314a',
-      background   :'#192235',
-      color        :'#eaf2ff',
-      fontSize     :'13px',
-      whiteSpace   :'nowrap'
+      display:'inline-block', padding:'6px 10px', borderRadius:'8px',
+      border:'1px solid #24314a', background:'#192235', color:'#eaf2ff',
+      fontSize:'13px', whiteSpace:'nowrap'
     });
     span.textContent = 'Maatadvies: —';
     slot.appendChild(span);
 
-    (bar.children.length > 1)
-      ? bar.insertBefore(slot, bar.children[1])
-      : bar.appendChild(slot);
-
+    (bar.children.length>1) ? bar.insertBefore(slot,bar.children[1])
+                            : bar.appendChild(slot);
     return span;
   }
-  window.ensureIndicator = ensureIndicator;   // overwrite old one
+  window.ensureIndicator = ensureIndicator;      // overwrite any old version
 
   /* -----------------------------------------------------------
-   * 3. Override setIndicator so jeans sizes are numeric
+   * 2. New setIndicator: jeans numeric + clear green/orange/red logic
    * --------------------------------------------------------- */
-  const origDist = window.dist;               // reuse existing helpers
+  const origDist = window.dist;                  // keep existing distance fn
   window.setIndicator = function (kind, selectedRaw) {
     const el = ensureIndicator();
-    let selected = selectedRaw;
-    let adv      = window.__virtupas_advice[kind];
+    let sel = selectedRaw;
+    let adv = window.__virtupas_advice?.[kind];
 
-    /* convert only for pants/jeans */
-    if (kind === 'jeans') {
-      selected = toNumJeans(selectedRaw);
-      adv      = toNumJeans(adv);
-    }
+    if (kind === 'jeans') { sel = toNumJeans(sel); adv = toNumJeans(adv); }
 
-    /* if no advice yet */
-    if (!adv) {
-      el.style.background = '#192235';
-      el.style.color      = '#eaf2ff';
-      el.textContent      = 'Maatadvies: —';
+    /* no advice yet? */
+    if (!adv) {                                 // stays neutral
+      el.style.background='#192235'; el.style.color='#eaf2ff';
+      el.textContent='Maatadvies: —';
       return;
     }
 
-    const d  = origDist(kind, selected, adv);
-    let bg='#192235', fg='#eaf2ff', label='';
-    if (d === 0) {
-      bg='#113624'; fg='#c5ffd7'; label='✅ goed: ' + adv;
-    } else if (d === 1) {
-      bg='#3a340f'; fg='#fff2b3';
-      label='⚠️ afwijken: advies ' + adv + ' | keuze ' + selected;
+    const d = origDist(kind, sel, adv);
+    /* d==0 ➜ green | 1 ➜ orange | ≥2 ➜ red */
+    let bg, fg, label;
+    if (d===0) {
+      bg='#135e34'; fg='#e8ffe8'; label='✅ goed: ' + adv;
+    } else if (d===1) {
+      bg='#8a5800'; fg='#fff1c9';
+      label='⚠️ afwijking: advies '+adv+' | keuze '+sel;
     } else {
-      bg='#3a1212'; fg='#ffd0d0';
-      label='⛔ te veel afwijking: advies ' + adv + ' | keuze ' + selected;
+      bg='#a20000'; fg='#ffd8d8';
+      label='⛔ te groot verschil: advies '+adv+' | keuze '+sel;
     }
-    el.style.background = bg;
-    el.style.color      = fg;
-    el.textContent      = 'Maatadvies: ' + label;
+    el.style.background=bg; el.style.color=fg;
+    el.textContent='Maatadvies: ' + label;
   };
 
   /* -----------------------------------------------------------
-   * 4. Build the badge right away so it’s never empty
+   * 3. Keep the badge in-sync automatically
    * --------------------------------------------------------- */
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ensureIndicator, { once:true });
+  /* 3a Poll until first advice is available → show immediately (green) */
+  let firstShown=false;
+  const poller=setInterval(() => {
+    const adv=window.__virtupas_advice;
+    if (!adv) return;
+    /* use first key with non-empty advice */
+    const [kind]=Object.entries(adv).find(([,v])=>v)||[];
+    if (kind) { window.setIndicator(kind, adv[kind]); firstShown=true; }
+    if (firstShown) clearInterval(poller);
+  }, 200);
+
+  /* 3b Update every time the user tries something on (probeer-aan)        */
+  document.addEventListener('click', e => {
+    const btn=e.target.closest('[data-action="probeer-aan"], .vp-try-btn');
+    if (!btn) return;
+    /* give VirtuPAs a tick to update its globals, then refresh badge */
+    setTimeout(() => {
+      const kind   = btn.dataset.kind   || window.__virtupas_kind;
+      const selRaw = btn.dataset.size   || window.__virtupas_size?.[kind];
+      if (kind && selRaw) window.setIndicator(kind, selRaw);
+    }, 60);
+  });
+
+  /* 3c Still respond to manual size clicks – those already call setIndicator */
+  /* nothing extra needed */
+
+  /* -----------------------------------------------------------
+   * 4. Create the indicator immediately so it is never empty on load
+   * --------------------------------------------------------- */
+  if (document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',ensureIndicator,{once:true});
   } else {
     ensureIndicator();
   }
